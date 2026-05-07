@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Assessment Planner — Middle</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#ffffff;--bg2:#f5f5f3;--bg3:#efefec;--bg-info:#e6f1fb;
+  --text:#1a1a18;--text2:#5f5e5a;--text3:#888780;--text-info:#185fa5;
+  --border:rgba(0,0,0,0.12);--border2:rgba(0,0,0,0.22);
+  --r:8px;--rl:12px;--font:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  --green:#1A6B35;--red:#a32d2d;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#1e1e1c;--bg2:#2a2a28;--bg3:#242422;--bg-info:#0c2a44;
+  --text:#f0efe8;--text2:#a8a79f;--text3:#6a6960;--text-info:#85b7eb;
+  --border:rgba(255,255,255,0.1);--border2:rgba(255,255,255,0.2);
+}}
+body{font-family:var(--font);background:var(--bg3);color:var(--text);min-height:100vh;padding:20px 16px}
+
+#login-screen{max-width:360px;margin:80px auto 0;background:var(--bg);border-radius:var(--rl);border:0.5px solid var(--border);padding:2rem}
+#login-screen h1{font-size:17px;font-weight:500;margin-bottom:4px}
+#login-screen .sub{font-size:12px;color:var(--text2);margin-bottom:1.5rem}
+.lfield{margin-bottom:12px}
+.lfield label{font-size:11px;color:var(--text2);display:block;margin-bottom:4px}
+.lfield input{width:100%;font-size:13px;padding:8px 10px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;font-family:var(--font)}
+.lfield input:focus{border-color:var(--text2)}
+.login-btn{width:100%;background:var(--text);color:var(--bg);border:none;border-radius:var(--r);padding:9px;font-size:13px;cursor:pointer;font-family:var(--font);margin-top:4px}
+.login-btn:hover{opacity:.85}
+.lerr{font-size:12px;color:var(--red);margin-top:8px;min-height:16px}
+
+#app{max-width:1100px;margin:0 auto;display:none}
+.app-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;flex-wrap:wrap;gap:8px}
+.app-title{font-size:17px;font-weight:500}
+.hdr-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.rbadge{display:inline-flex;align-items:center;gap:5px;font-size:11px;padding:3px 10px;border-radius:999px}
+.rb-teacher{background:#EAF3DE;color:#27500A;border:0.5px solid #C0DD97}
+.rb-coord{background:#E6F1FB;color:#0C447C;border:0.5px solid #B5D4F4}
+.rb-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.ibtn{background:none;border:0.5px solid var(--border);border-radius:var(--r);padding:5px 10px;font-size:11px;cursor:pointer;color:var(--text3);font-family:var(--font)}
+.ibtn:hover{background:var(--bg2);color:var(--text2)}
+.pbtn{background:var(--text);color:var(--bg);border:none;border-radius:var(--r);padding:6px 14px;font-size:12px;cursor:pointer;font-family:var(--font)}
+.pbtn:hover{opacity:.85}
+
+.vtabs{display:flex;border:0.5px solid var(--border2);border-radius:var(--r);overflow:hidden;margin-bottom:1.25rem;width:fit-content}
+.vtab{background:none;border:none;padding:7px 14px;font-size:12px;cursor:pointer;color:var(--text2);font-family:var(--font)}
+.vtab.active{background:var(--bg2);color:var(--text);font-weight:500}
+
+.cal-nav{display:flex;align-items:center;gap:8px;margin-bottom:1rem;flex-wrap:wrap}
+.nav-btn{background:none;border:0.5px solid var(--border2);border-radius:var(--r);padding:5px 12px;font-size:13px;cursor:pointer;color:var(--text)}
+.nav-btn:hover{background:var(--bg2)}
+.cal-lbl{font-size:14px;font-weight:500;flex:1}
+
+.frow{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center}
+.flbl{font-size:11px;color:var(--text3)}
+.pill{font-size:11px;padding:3px 10px;border-radius:999px;cursor:pointer;border:0.5px solid var(--border2);background:var(--bg2);color:var(--text2);white-space:nowrap;user-select:none;transition:all .1s}
+.pill.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+
+.wgrid{display:grid;grid-template-columns:55px repeat(5,1fr);gap:1px;background:var(--border);border:0.5px solid var(--border);border-radius:var(--rl);overflow:hidden;margin-bottom:1.5rem}
+.wgh{background:var(--bg2);padding:7px 5px;font-size:10px;font-weight:500;color:var(--text2);text-align:center;letter-spacing:.04em}
+.wgg{background:var(--bg2);padding:8px 4px;display:flex;flex-direction:column;justify-content:center;align-items:center;border-right:0.5px solid var(--border)}
+.wgn{font-size:12px;font-weight:600;color:var(--text)}
+.wgc{background:var(--bg);padding:5px 4px;min-height:72px;cursor:pointer;transition:background .1s;vertical-align:top}
+.wgc:hover{background:var(--bg-info)}
+.wgc.today{background:var(--bg-info)}
+.chip{font-size:10px;padding:2px 5px;border-radius:3px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;display:block;cursor:pointer;border:0.5px solid transparent}
+.morechip{font-size:10px;color:var(--text3)}
+.loadbadge{font-size:9px;padding:1px 4px;border-radius:2px;margin-top:2px;display:inline-block}
+.l0{background:#EAF3DE;color:#27500A}.l1{background:#FEF3C7;color:#92400E}.l2{background:#FECACA;color:#991B1B}
+
+.sl{background:#EEEDFE;color:#3C3489;border-color:#AFA9EC}
+.si{background:#E1F5EE;color:#085041;border-color:#5DCAA5}
+.sf{background:#FEF3C7;color:#92400E;border-color:#FCD34D}
+.sm{background:#FBEAF0;color:#72243E;border-color:#ED93B1}
+.sc{background:#E0F2FE;color:#075985;border-color:#7DD3FC}
+.sb{background:#DCFCE7;color:#166534;border-color:#86EFAC}
+.sq{background:#FEE2E2;color:#991B1B;border-color:#FCA5A5}
+.sf2{background:#EDE9FE;color:#5B21B6;border-color:#C4B5FD}
+.smu{background:#FFF7ED;color:#9A3412;border-color:#FDBA74}
+.sar{background:#FCE7F3;color:#9D174D;border-color:#F9A8D4}
+.sef{background:#D1FAE5;color:#065F46;border-color:#6EE7B7}
+.sd{background:#F5F3FF;color:#4C1D95;border-color:#DDD6FE}
+.sis{background:#FFFBEB;color:#78350F;border-color:#FDE68A}
+.so{background:var(--bg2);color:var(--text2);border-color:var(--border2)}
+
+.tt{background:#1a1a18;color:#fff;border-color:#000}
+.tp{background:#1B4FD8;color:#fff;border-color:#1240B0}
+.ttc{background:#1A6B35;color:#fff;border-color:#145228}
+.te{background:#D85A30;color:#fff;border-color:#993C1D}
+.tpr{background:#5C1A2E;color:#fff;border-color:#3D0F1E}
+.to{background:var(--text2);color:var(--bg);border-color:var(--border2)}
+
+.ltable{width:100%;border-collapse:collapse;font-size:12px}
+.ltable th{background:var(--bg2);padding:8px 10px;text-align:left;font-size:11px;font-weight:500;color:var(--text2);border-bottom:0.5px solid var(--border)}
+.ltable td{padding:8px 10px;border-bottom:0.5px solid var(--border);vertical-align:middle}
+.ltable tr:hover td{background:var(--bg2)}
+.sbadge{font-size:10px;padding:2px 8px;border-radius:999px;white-space:nowrap}
+.sp{background:#FEF3C7;color:#92400E;border:0.5px solid #FCD34D}
+.sa{background:#DCFCE7;color:#166534;border:0.5px solid #86EFAC}
+.sr2{background:#FEE2E2;color:#991B1B;border:0.5px solid #FCA5A5}
+.abtn{background:none;border:0.5px solid var(--border2);border-radius:var(--r);padding:3px 8px;font-size:11px;cursor:pointer;color:var(--text2);font-family:var(--font);margin-right:3px}
+.abtn:hover{background:var(--bg2)}
+.aa{border-color:#86EFAC;color:#166534}.aa:hover{background:#DCFCE7}
+.ar2{border-color:#FCA5A5;color:#991B1B}.ar2:hover{background:#FEE2E2}
+
+.mback{position:fixed;inset:0;background:rgba(0,0,0,0.35);display:flex;align-items:center;justify-content:center;z-index:200}
+.modal{background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--rl);padding:1.5rem;width:480px;max-width:96vw;max-height:90vh;overflow-y:auto}
+.modal h3{font-size:15px;font-weight:500;margin-bottom:1.25rem}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px}
+.fgrid.one{grid-template-columns:1fr}
+.fb label{font-size:11px;color:var(--text2);display:block;margin-bottom:4px;font-weight:500}
+.fb input,.fb select,.fb textarea{width:100%;font-size:13px;padding:7px 10px;border:0.5px solid var(--border2);border-radius:var(--r);background:var(--bg);color:var(--text);outline:none;font-family:var(--font)}
+.fb input:focus,.fb select:focus,.fb textarea:focus{border-color:var(--text2)}
+.fb textarea{resize:vertical;min-height:60px}
+.critg{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.critb{padding:4px 14px;border-radius:var(--r);border:0.5px solid var(--border2);background:var(--bg2);color:var(--text2);font-size:13px;cursor:pointer;font-family:var(--font);transition:all .1s}
+.critb.on{background:var(--text);color:var(--bg);border-color:var(--text)}
+.crith{font-size:10px;color:var(--text3);margin-top:4px}
+.mact{display:flex;gap:8px;margin-top:1.25rem;justify-content:flex-end}
+.bsave{background:var(--text);color:var(--bg);border:none;border-radius:var(--r);padding:7px 16px;font-size:13px;cursor:pointer;font-family:var(--font)}
+.bcancel{background:none;border:0.5px solid var(--border2);border-radius:var(--r);padding:7px 16px;font-size:13px;cursor:pointer;color:var(--text2);font-family:var(--font)}
+.bdanger{background:#fcebeb;color:#a32d2d;border:0.5px solid #f09595;border-radius:var(--r);padding:7px 16px;font-size:13px;cursor:pointer;font-family:var(--font)}
+.cwarn{background:#FEF3C7;border:0.5px solid #FCD34D;border-radius:var(--r);padding:8px 12px;font-size:12px;color:#92400E;margin-bottom:10px}
+
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);font-size:12px;padding:8px 18px;border-radius:var(--r);z-index:400;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<div id="login-screen">
+  <h1>Assessment Planner</h1>
+  <p class="sub">Middle School · Redland</p>
+  <div class="lfield"><label>Username</label><input type="text" id="lu" placeholder="e.g. mates" onkeydown="if(event.key==='Enter')doLogin()"></div>
+  <div class="lfield"><label>Password</label><input type="password" id="lp" placeholder="Password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+  <button class="login-btn" onclick="doLogin()">Continue</button>
+  <div class="lerr" id="lerr"></div>
+</div>
+
+<div id="app">
+  <div class="app-hdr">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span class="app-title">Assessment Planner — Middle</span>
+      <span class="rbadge" id="rbadge"><span class="rb-dot"></span><span id="rlabel"></span></span>
+    </div>
+    <div class="hdr-right">
+      <span id="ulabel" style="font-size:12px;color:var(--text2)"></span>
+      <button class="ibtn" onclick="openPrintModal()">&#128438; PDF</button>
+      <button class="pbtn" id="add-btn" onclick="openAddModal()" style="display:none">+ Add assessment</button>
+      <button class="ibtn" id="rev-btn" onclick="openBulkApprove()" style="display:none">&#10003; Review pending</button>
+      <button class="ibtn" onclick="doLogout()">Sign out</button>
+    </div>
+  </div>
+
+  <div class="vtabs">
+    <button class="vtab active" id="tab-cal" onclick="setView('cal')">&#128197; Calendar</button>
+    <button class="vtab" id="tab-list" onclick="setView('list')">&#128203; List</button>
+  </div>
+
+  <div class="cal-nav">
+    <button class="nav-btn" id="pw">&#8592;</button>
+    <span class="cal-lbl" id="wlbl"></span>
+    <button class="nav-btn" id="nw">&#8594;</button>
+  </div>
+
+  <div class="frow">
+    <span class="flbl">Grade</span>
+    <span class="pill on" data-g="5">5&#176;</span>
+    <span class="pill on" data-g="6">6&#176;</span>
+    <span class="pill on" data-g="7">7&#176;</span>
+    <span class="pill on" data-g="8">8&#176;</span>
+  </div>
+  <div class="frow">
+    <span class="flbl">Status</span>
+    <span class="pill on" data-s="pending">Pending</span>
+    <span class="pill on" data-s="approved">Approved</span>
+    <span class="pill on" data-s="rejected">Rejected</span>
+  </div>
+
+  <div id="cal-view"></div>
+  <div id="list-view" style="display:none"></div>
+</div>
+
+<div id="modal-area"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyXnNYYSJDkBjYXkn8HEwk6VOOmVAxrAnPNwDfHL5LBUchF4mb5siHJvas5WovPKdPd/exec';
+
+const SUBJECTS = ['Lenguaje','Inglés','Francés','Matemáticas','Ciencias','Biología','Química','Física','Música','Arte','Ed.Física y para la Salud','Diseño','Individuo y Sociedades'];
+const SCSS = {'Lenguaje':'sl','Inglés':'si','Francés':'sf','Matemáticas':'sm','Ciencias':'sc','Biología':'sb','Química':'sq','Física':'sf2','Música':'smu','Arte':'sar','Ed.Física y para la Salud':'sef','Diseño':'sd','Individuo y Sociedades':'sis'};
+const TYPES = ['Test','Proyecto','Trabajo en clase','Entrega','Presentación','Otro'];
+const TCSS = {'Test':'tt','Proyecto':'tp','Trabajo en clase':'ttc','Entrega':'te','Presentación':'tpr','Otro':'to'};
+const GRADES = ['5','6','7','8'];
+const CLASES = {'5':['5A','5B'],'6':['6A','6B'],'7':['7A','7B'],'8':['8A','8B']};
+
+const USERS = {
+  'coordinator':{pw:'coord2026',role:'coordinator',name:'Coordinador/a Middle',subject:null},
+  'lenguaje':{pw:'lenguaje2026',role:'teacher',name:'Prof. Lenguaje',subject:'Lenguaje'},
+  'ingles':{pw:'ingles2026',role:'teacher',name:'Prof. Inglés',subject:'Inglés'},
+  'frances':{pw:'frances2026',role:'teacher',name:'Prof. Francés',subject:'Francés'},
+  'mates':{pw:'mates2026',role:'teacher',name:'Prof. Matemáticas',subject:'Matemáticas'},
+  'ciencias':{pw:'ciencias2026',role:'teacher',name:'Prof. Ciencias',subject:'Ciencias'},
+  'bio':{pw:'bio2026',role:'teacher',name:'Prof. Biología',subject:'Biología'},
+  'quimica':{pw:'quimica2026',role:'teacher',name:'Prof. Química',subject:'Química'},
+  'fisica':{pw:'fisica2026',role:'teacher',name:'Prof. Física',subject:'Física'},
+  'musica':{pw:'musica2026',role:'teacher',name:'Prof. Música',subject:'Música'},
+  'arte':{pw:'arte2026',role:'teacher',name:'Prof. Arte',subject:'Arte'},
+  'edfisica':{pw:'edfisica2026',role:'teacher',name:'Prof. Ed.Física',subject:'Ed.Física y para la Salud'},
+  'diseno':{pw:'diseno2026',role:'teacher',name:'Prof. Diseño',subject:'Diseño'},
+  'individuo':{pw:'individuo2026',role:'teacher',name:'Prof. I&S',subject:'Individuo y Sociedades'},
+};
+
+const TODAY = new Date();
+const fmt = d => { const r=new Date(d); return r.getFullYear()+'-'+String(r.getMonth()+1).padStart(2,'0')+'-'+String(r.getDate()).padStart(2,'0'); };
+const fmtD = d => new Date(d+'T12:00:00').toLocaleDateString('es-CL',{weekday:'short',day:'numeric',month:'short'});
+const fmtLong = d => new Date(d+'T12:00:00').toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+
+let cur = null;
+let weekOff = 0;
+let view = 'cal';
+let items = [];
+let aGrades = new Set(['5','6','7','8']);
+let aStatus = new Set(['pending','approved','rejected']);
+let _cn = 0;
+
+function doLogin() {
+  const u = document.getElementById('lu').value.trim().toLowerCase();
+  const p = document.getElementById('lp').value;
+  const user = USERS[u];
+  if (!user||user.pw!==p) { document.getElementById('lerr').textContent='Incorrect username or password.'; return; }
+  cur = {username:u,...user};
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('app').style.display='block';
+  document.getElementById('rbadge').className='rbadge '+(cur.role==='coordinator'?'rb-coord':'rb-teacher');
+  document.getElementById('rlabel').textContent=cur.role==='coordinator'?'Coordinator':'Teacher';
+  document.getElementById('ulabel').textContent=cur.name;
+  document.getElementById('add-btn').style.display=cur.role==='teacher'?'inline-block':'none';
+  document.getElementById('rev-btn').style.display=cur.role==='coordinator'?'inline-block':'none';
+  loadItems();
+}
+
+function doLogout() {
+  cur=null; items=[];
+  document.getElementById('app').style.display='none';
+  document.getElementById('login-screen').style.display='block';
+  document.getElementById('lu').value=''; document.getElementById('lp').value='';
+  document.getElementById('lerr').textContent='';
+}
+
+function api(payload) {
+  payload.username = cur?cur.username:'';
+  payload.token    = cur?cur.pw:'';
+  return new Promise((res,rej) => {
+    if (SCRIPT_URL==='https://script.google.com/macros/s/AKfycbyXnNYYSJDkBjYXkn8HEwk6VOOmVAxrAnPNwDfHL5LBUchF4mb5siHJvas5WovPKdPd/exec') { res(localOp(payload)); return; }
+    const cb='_ap'+(++_cn);
+    const t=setTimeout(()=>{delete window[cb];rej(new Error('Timeout'));},15000);
+    window[cb]=d=>{clearTimeout(t);delete window[cb];const s=document.getElementById('js_'+cb);if(s)s.remove();res(d);};
+    const url=SCRIPT_URL+'?callback='+cb+'&payload='+encodeURIComponent(JSON.stringify(payload));
+    const s=document.createElement('script');s.id='js_'+cb;s.src=url;
+    s.onerror=()=>{clearTimeout(t);delete window[cb];s.remove();rej(new Error('Network error'));};
+    document.head.appendChild(s);
+  });
+}
+
+function localOp(p) {
+  const KEY='ap2_data';
+  let d=[];
+  try{d=JSON.parse(localStorage.getItem(KEY)||'[]');}catch(e){}
+  if(p.action==='getItems') return {ok:true,items:d};
+  if(p.action==='addItem'){
+    const a={...p.item,id:Date.now(),status:'pending',by:cur.username,at:fmt(TODAY)};
+    d.push(a); localStorage.setItem(KEY,JSON.stringify(d)); return {ok:true,item:a};
+  }
+  if(p.action==='setStatus'){
+    d=d.map(a=>a.id===p.id?{...a,status:p.status,comment:p.comment||''}:a);
+    localStorage.setItem(KEY,JSON.stringify(d)); return {ok:true};
+  }
+  if(p.action==='delItem'){
+    d=d.filter(a=>a.id!==p.id);
+    localStorage.setItem(KEY,JSON.stringify(d)); return {ok:true};
+  }
+  return {ok:false,error:'Unknown action'};
+}
+
+function loadItems() {
+  api({action:'getItems'}).then(d=>{
+    if(d.ok){items=d.items||[];render();}
+    else showToast('Error: '+d.error);
+  }).catch(()=>showToast('Connection error'));
+}
+
+function wStart() {
+  const d=new Date(TODAY);
+  const day=d.getDay();
+  d.setDate(d.getDate()-(day===0?6:day-1)+weekOff*7);
+  return d;
+}
+
+function wDays() {
+  const ws=wStart();
+  return [0,1,2,3,4].map(i=>{const d=new Date(ws);d.setDate(ws.getDate()+i);return fmt(d);});
+}
+
+function forCell(date,grade) {
+  return items.filter(a=>a.date===date&&aGrades.has(a.curso.charAt(0))&&a.curso.charAt(0)===grade&&aStatus.has(a.status))
+    .sort((a,b)=>a.curso.localeCompare(b.curso)||a.subject.localeCompare(b.subject));
+}
+
+function setView(v) {
+  view=v;
+  document.getElementById('tab-cal').classList.toggle('active',v==='cal');
+  document.getElementById('tab-list').classList.toggle('active',v==='list');
+  document.getElementById('cal-view').style.display=v==='cal'?'block':'none';
+  document.getElementById('list-view').style.display=v==='list'?'block':'none';
+  render();
+}
+
+function render() { view==='cal'?renderCal():renderList(); }
+
+function renderCal() {
+  const days=wDays();
+  const ws=wStart();const we=new Date(ws);we.setDate(ws.getDate()+4);
+  document.getElementById('wlbl').textContent=
+    ws.toLocaleDateString('es-CL',{day:'numeric',month:'short'})+' – '+
+    we.toLocaleDateString('es-CL',{day:'numeric',month:'short',year:'numeric'});
+  const DN=['LUN','MAR','MIÉ','JUE','VIE'];
+  let h='<div class="wgrid">';
+  h+='<div class="wgh"></div>';
+  days.forEach((d,i)=>{
+    const dt=new Date(d+'T12:00:00');
+    const isT=d===fmt(TODAY);
+    h+=`<div class="wgh" style="${isT?'background:var(--bg-info);color:var(--text-info)':''}">${DN[i]}<br><strong>${dt.getDate()}</strong></div>`;
+  });
+  GRADES.filter(g=>aGrades.has(g)).forEach(g=>{
+    h+=`<div class="wgg"><div class="wgn">${g}&#176;</div></div>`;
+    days.forEach(d=>{
+      const evs=forCell(d,g);
+      const isT=d===fmt(TODAY);
+      const cnt=evs.filter(a=>a.status!=='rejected').length;
+      const lc=cnt===0?'':cnt<=2?'l0':cnt<=3?'l1':'l2';
+      const lb=cnt>0?`<span class="loadbadge ${lc}">${cnt} eval${cnt>1?'s':''}</span>`:'';
+      h+=`<div class="wgc${isT?' today':''}" onclick="cellClick('${d}','${g}')">`;
+      evs.slice(0,3).forEach(a=>{
+        const sc=SCSS[a.subject]||'so';
+        h+=`<span class="chip ${sc}" onclick="event.stopPropagation();showDetail(${a.id})" title="${a.subject} · ${a.curso} · ${a.type}">${a.curso} ${a.subject}</span>`;
+      });
+      if(evs.length>3) h+=`<span class="morechip">+${evs.length-3} más</span>`;
+      h+=lb+'</div>';
+    });
+  });
+  h+='</div>';
+  document.getElementById('cal-view').innerHTML=h;
+}
+
+function renderList() {
+  const sorted=[...items]
+    .filter(a=>aStatus.has(a.status)&&aGrades.has(a.curso.charAt(0)))
+    .sort((a,b)=>a.date.localeCompare(b.date)||a.curso.localeCompare(b.curso));
+  if(!sorted.length){
+    document.getElementById('list-view').innerHTML='<div style="text-align:center;padding:3rem;color:var(--text3);font-size:13px">No assessments match the current filters.</div>';
+    return;
+  }
+  let h='<div style="overflow-x:auto"><table class="ltable"><thead><tr><th>Date</th><th>Class</th><th>Subject</th><th>Type</th><th>Tema</th><th>Criterios</th><th>Status</th><th></th></tr></thead><tbody>';
+  sorted.forEach(a=>{
+    const sc=SCSS[a.subject]||'so';
+    const tc=TCSS[a.type]||'to';
+    const st=a.status==='approved'?'sa':a.status==='rejected'?'sr2':'sp';
+    const canEdit=cur.role==='coordinator'||cur.username===a.by;
+    const canApprove=cur.role==='coordinator';
+    h+=`<tr><td>${fmtD(a.date)}</td><td><strong>${a.curso}</strong></td>
+      <td><span class="chip ${sc}" style="display:inline-block">${a.subject}</span></td>
+      <td><span class="chip ${tc}" style="display:inline-block">${a.type}</span></td>
+      <td>${a.tema||'—'}</td><td>${(a.criterios||[]).join(', ')||'—'}</td>
+      <td><span class="sbadge ${st}">${a.status.charAt(0).toUpperCase()+a.status.slice(1)}</span></td>
+      <td>${canApprove&&a.status==='pending'?`<button class="abtn aa" onclick="setStatus(${a.id},'approved')">&#10003;</button><button class="abtn ar2" onclick="rejectWithComment(${a.id},null)">&#10007;</button>`:''}
+          ${canEdit?`<button class="abtn" onclick="showDetail(${a.id})">View</button>`:''}
+          ${canEdit&&a.status!=='approved'?`<button class="abtn" style="color:var(--red)" onclick="delItem(${a.id})">Del</button>`:''}
+      </td></tr>`;
+  });
+  h+='</tbody></table></div>';
+  document.getElementById('list-view').innerHTML=h;
+}
+
+document.querySelectorAll('.pill[data-g]').forEach(p=>{
+  p.onclick=()=>{
+    const v=p.dataset.g;
+    if(aGrades.has(v)) aGrades.delete(v); else aGrades.add(v);
+    p.classList.toggle('on',aGrades.has(v));
+    render();
+  };
+});
+document.querySelectorAll('.pill[data-s]').forEach(p=>{
+  p.onclick=()=>{
+    const v=p.dataset.s;
+    if(aStatus.has(v)) aStatus.delete(v); else aStatus.add(v);
+    p.classList.toggle('on',aStatus.has(v));
+    render();
+  };
+});
+document.getElementById('pw').onclick=()=>{weekOff--;render();};
+document.getElementById('nw').onclick=()=>{weekOff++;render();};
+
+function cellClick(date,grade) {
+  if(cur.role==='teacher') openAddModal(date,grade);
+  else showDaySummary(date,grade);
+}
+
+function showDaySummary(date,grade) {
+  const evs=forCell(date,grade);
+  if(!evs.length){showToast('No assessments for this cell.');return;}
+  const b=document.createElement('div');b.className='mback';
+  let rows=evs.map(a=>{
+    const sc=SCSS[a.subject]||'so';
+    const st=a.status==='approved'?'sa':a.status==='rejected'?'sr2':'sp';
+    return `<tr><td><span class="chip ${sc}" style="display:inline-block">${a.subject}</span></td>
+      <td>${a.curso}</td><td>${a.type}</td><td>${a.tema||'—'}</td>
+      <td><span class="sbadge ${st}">${a.status}</span></td>
+      <td>${cur.role==='coordinator'&&a.status==='pending'
+        ?`<button class="abtn aa" onclick="setStatus(${a.id},'approved');this.closest('tr').style.opacity='.4'">&#10003;</button>
+           <button class="abtn ar2" onclick="rejectWithComment(${a.id},this.closest('.mback'))">&#10007;</button>`:''}
+      </td></tr>`;
+  }).join('');
+  b.innerHTML=`<div class="modal" style="width:600px"><h3>${fmtD(date)} — ${grade}&#176;</h3>
+    <table class="ltable"><thead><tr><th>Subject</th><th>Class</th><th>Type</th><th>Tema</th><th>Status</th><th></th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="mact"><button class="bcancel" onclick="this.closest('.mback').remove()">Close</button></div></div>`;
+  document.body.appendChild(b);
+}
+
+function openAddModal(prefDate,prefGrade) {
+  const b=document.createElement('div');b.className='mback';b.id='addm';
+  const sOpts=SUBJECTS.map(s=>`<option value="${s}"${cur.subject===s?' selected':''}>${s}</option>`).join('');
+  const tOpts=TYPES.map(t=>`<option value="${t}">${t}</option>`).join('');
+  const gOpts=GRADES.map(g=>`<option value="${g}"${prefGrade===g?' selected':''}>${g}&#176;</option>`).join('');
+  const dv=prefDate||fmt(TODAY);
+  b.innerHTML=`<div class="modal"><h3>Add assessment</h3>
+    <div id="cwrap"></div>
+    <div class="fgrid">
+      <div class="fb"><label>Asignatura</label><select id="f-sub">${sOpts}</select></div>
+      <div class="fb"><label>Fecha</label><input type="date" id="f-date" value="${dv}"></div>
+    </div>
+    <div class="fgrid">
+      <div class="fb"><label>Grado</label><select id="f-grade" onchange="updClases()">${gOpts}</select></div>
+      <div class="fb"><label>Clase</label><select id="f-clase"></select></div>
+    </div>
+    <div class="fgrid">
+      <div class="fb"><label>Tipo</label><select id="f-type" onchange="onTypeChg()">${tOpts}</select></div>
+      <div class="fb" id="otro-blk" style="display:none"><label>Especificar tipo</label><input type="text" id="f-otro" placeholder="Describe el tipo"></div>
+    </div>
+    <div class="fgrid one"><div class="fb"><label>Tema</label><input type="text" id="f-tema" placeholder="Ej: Ecuaciones lineales"></div></div>
+    <div class="fgrid one"><div class="fb">
+      <label>Criterios evaluados <span style="font-weight:400;color:var(--text3)">(máx. 3)</span></label>
+      <div class="critg" id="critg">
+        ${['A','B','C','D'].map(c=>`<button type="button" class="critb" data-c="${c}" onclick="togCrit(this)">${c}</button>`).join('')}
+      </div>
+      <div class="crith" id="crith"></div>
+    </div></div>
+    <div class="mact">
+      <button class="bcancel" onclick="document.getElementById('addm').remove()">Cancelar</button>
+      <button class="bsave" onclick="saveItem()">Guardar</button>
+    </div></div>`;
+  document.body.appendChild(b);
+  updClases();
+  if(prefGrade){document.getElementById('f-grade').value=prefGrade;updClases();}
+  document.getElementById('f-date').onchange=chkConflict;
+  document.getElementById('f-clase').onchange=chkConflict;
+  document.getElementById('f-sub').onchange=chkConflict;
+  chkConflict();
+}
+
+window.updClases=function(){
+  const g=document.getElementById('f-grade')?.value;
+  if(!g)return;
+  const opts=(CLASES[g]||[]).map(c=>`<option value="${c}">${c}</option>`).join('')+`<option value="${g}AB">${g}AB</option>`;
+  document.getElementById('f-clase').innerHTML=opts;
+  chkConflict();
+};
+
+window.onTypeChg=function(){
+  document.getElementById('otro-blk').style.display=document.getElementById('f-type').value==='Otro'?'block':'none';
+};
+
+window.togCrit=function(btn){
+  const sel=document.querySelectorAll('.critb.on');
+  if(btn.classList.contains('on')){btn.classList.remove('on');}
+  else if(sel.length>=3){document.getElementById('crith').textContent='Máximo 3 criterios';return;}
+  else{btn.classList.add('on');}
+  document.getElementById('crith').textContent='';
+};
+
+function chkConflict(){
+  const date=document.getElementById('f-date')?.value;
+  const clase=document.getElementById('f-clase')?.value;
+  const sub=document.getElementById('f-sub')?.value;
+  if(!date||!clase)return;
+  const c=items.filter(a=>a.date===date&&a.curso===clase&&a.subject!==sub&&a.status!=='rejected');
+  const w=document.getElementById('cwrap');
+  if(!w)return;
+  w.innerHTML=c.length?`<div class="cwarn">&#9888;&#65039; ${clase} ya tiene ${c.length} evaluación(es) ese día: ${c.map(a=>a.subject).join(', ')}</div>`:'';
+}
+
+function saveItem(){
+  const sub=document.getElementById('f-sub').value;
+  const date=document.getElementById('f-date').value;
+  const grade=document.getElementById('f-grade').value;
+  const curso=document.getElementById('f-clase').value;
+  let type=document.getElementById('f-type').value;
+  const tema=document.getElementById('f-tema').value.trim();
+  const criterios=[...document.querySelectorAll('.critb.on')].map(b=>b.dataset.c);
+  if(type==='Otro'){const o=document.getElementById('f-otro').value.trim();if(o)type=o;}
+  if(!date||!curso){alert('Completa todos los campos obligatorios.');return;}
+  api({action:'addItem',item:{subject:sub,date,grade,curso,type,tema,criterios}})
+    .then(d=>{
+      if(d.ok){items.push(d.item);document.getElementById('addm').remove();render();showToast('Guardado — pendiente aprobación del coordinador.');}
+      else showToast('Error: '+d.error);
+    }).catch(()=>showToast('Error de conexión'));
+}
+
+function showDetail(id){
+  const a=items.find(x=>x.id===id);if(!a)return;
+  const sc=SCSS[a.subject]||'so';
+  const st=a.status==='approved'?'sa':a.status==='rejected'?'sr2':'sp';
+  const canEdit=cur.role==='coordinator'||cur.username===a.by;
+  const canApprove=cur.role==='coordinator'&&a.status==='pending';
+  const b=document.createElement('div');b.className='mback';
+  b.innerHTML=`<div class="modal" style="width:400px">
+    <h3><span class="chip ${sc}" style="display:inline-block;margin-right:6px">${a.subject}</span>${a.type}</h3>
+    <table style="width:100%;font-size:13px;border-collapse:collapse">
+      <tr><td style="padding:5px 0;color:var(--text2);width:110px">Fecha</td><td>${fmtD(a.date)}</td></tr>
+      <tr><td style="padding:5px 0;color:var(--text2)">Clase</td><td><strong>${a.curso}</strong></td></tr>
+      <tr><td style="padding:5px 0;color:var(--text2)">Asignatura</td><td>${a.subject}</td></tr>
+      <tr><td style="padding:5px 0;color:var(--text2)">Tipo</td><td>${a.type}</td></tr>
+      <tr><td style="padding:5px 0;color:var(--text2)">Tema</td><td>${a.tema||'—'}</td></tr>
+      <tr><td style="padding:5px 0;color:var(--text2)">Criterios</td><td>${(a.criterios||[]).join(', ')||'—'}</td></tr>
+      <tr><td style="padding:5px 0;color:var(--text2)">Estado</td><td><span class="sbadge ${st}">${a.status.charAt(0).toUpperCase()+a.status.slice(1)}</span></td></tr>
+      <tr><td style="padding:5px 0;color:var(--text2)">Ingresado</td><td>${a.by||'—'} · ${a.at||'—'}</td></tr>
+      ${a.comment?`<tr><td style="padding:5px 0;color:var(--text2)">Comentario</td><td>${a.comment}</td></tr>`:''}
+    </table>
+    <div class="mact">
+      ${canApprove?`<button class="bdanger" onclick="rejectWithComment(${a.id},this.closest('.mback'))">&#10007; Rechazar</button>
+        <button class="bsave" style="background:var(--green);margin-right:auto" onclick="setStatus(${a.id},'approved');this.closest('.mback').remove()">&#10003; Aprobar</button>`:''}
+      ${canEdit&&a.status!=='approved'?`<button class="bdanger" onclick="delItem(${a.id});this.closest('.mback').remove()">Eliminar</button>`:''}
+      <button class="bcancel" onclick="this.closest('.mback').remove()">Cerrar</button>
+    </div></div>`;
+  document.body.appendChild(b);
+}
+
+function setStatus(id,status,comment){
+  api({action:'setStatus',id,status,comment:comment||''})
+    .then(d=>{
+      if(d.ok){items=items.map(a=>a.id===id?{...a,status,comment:comment||''}:a);render();showToast(status==='approved'?'Aprobado.':'Rechazado.');}
+      else showToast('Error: '+d.error);
+    }).catch(()=>showToast('Error de conexión'));
+}
+
+function rejectWithComment(id,oldBackdrop){
+  if(oldBackdrop)oldBackdrop.remove();
+  const b=document.createElement('div');b.className='mback';
+  b.innerHTML=`<div class="modal" style="width:360px"><h3>Rechazar evaluación</h3>
+    <div class="fb"><label>Comentario para el profesor (opcional)</label><textarea id="rcom" placeholder="Motivo del rechazo..."></textarea></div>
+    <div class="mact">
+      <button class="bcancel" onclick="this.closest('.mback').remove()">Cancelar</button>
+      <button class="bdanger" onclick="setStatus(${id},'rejected',document.getElementById('rcom').value);this.closest('.mback').remove()">Rechazar</button>
+    </div></div>`;
+  document.body.appendChild(b);
+}
+
+function delItem(id){
+  if(!confirm('¿Eliminar esta evaluación?'))return;
+  api({action:'delItem',id}).then(d=>{if(d.ok){items=items.filter(a=>a.id!==id);render();showToast('Eliminado.');}else showToast('Error: '+d.error);});
+}
+
+function openBulkApprove(){
+  const pend=items.filter(a=>a.status==='pending').sort((a,b)=>a.date.localeCompare(b.date));
+  if(!pend.length){showToast('No hay evaluaciones pendientes.');return;}
+  const b=document.createElement('div');b.className='mback';
+  let rows=pend.map(a=>{
+    const sc=SCSS[a.subject]||'so';
+    return `<tr id="pr${a.id}"><td>${fmtD(a.date)}</td><td>${a.curso}</td>
+      <td><span class="chip ${sc}" style="display:inline-block">${a.subject}</span></td>
+      <td>${a.type}</td><td>${a.tema||'—'}</td>
+      <td><button class="abtn aa" onclick="setStatus(${a.id},'approved');document.getElementById('pr${a.id}').style.opacity='.35'">&#10003;</button>
+          <button class="abtn ar2" onclick="rejectWithComment(${a.id},null)">&#10007;</button></td></tr>`;
+  }).join('');
+  window._pendIds=pend.map(a=>a.id);
+  b.innerHTML=`<div class="modal" style="width:700px;max-width:96vw"><h3>Revisar pendientes (${pend.length})</h3>
+    <div style="overflow-x:auto"><table class="ltable"><thead><tr><th>Fecha</th><th>Clase</th><th>Asignatura</th><th>Tipo</th><th>Tema</th><th>Acción</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="mact">
+      <button class="bsave" style="background:var(--green)" onclick="approveAll()">&#10003; Aprobar todo</button>
+      <button class="bcancel" onclick="this.closest('.mback').remove()">Cerrar</button>
+    </div></div>`;
+  document.body.appendChild(b);
+}
+
+window.approveAll=function(){
+  const ids=window._pendIds;
+  let chain=Promise.resolve();
+  ids.forEach(id=>{chain=chain.then(()=>api({action:'setStatus',id,status:'approved',comment:''}));});
+  chain.then(()=>{
+    items=items.map(a=>ids.includes(a.id)?{...a,status:'approved'}:a);
+    document.querySelector('.mback').remove();render();showToast(ids.length+' evaluaciones aprobadas.');
+  });
+};
+
+function openPrintModal(){
+  const b=document.createElement('div');b.className='mback';
+  const ye=TODAY.getFullYear()+'-12-31';
+  const gOpts=['<option value="all">Todos los grados</option>',...GRADES.map(g=>`<option value="${g}">${g}&#176;</option>`)].join('');
+  const sOpts='<option value="all">Todas las asignaturas</option>'+SUBJECTS.map(s=>`<option value="${s}">${s}</option>`).join('');
+  b.innerHTML=`<div class="modal" style="width:420px"><h3>&#128438; Imprimir / PDF</h3>
+    <div class="fgrid">
+      <div class="fb"><label>Desde</label><input type="date" id="pf" value="${fmt(TODAY)}"></div>
+      <div class="fb"><label>Hasta</label><input type="date" id="pt" value="${ye}"></div>
+    </div>
+    <div class="fgrid">
+      <div class="fb"><label>Grado</label><select id="pg">${gOpts}</select></div>
+      <div class="fb"><label>Asignatura</label><select id="ps">${sOpts}</select></div>
+    </div>
+    <div class="fgrid one"><div class="fb"><label>Estado</label>
+      <select id="pst"><option value="all">Todos</option><option value="approved">Solo aprobados</option><option value="pending">Solo pendientes</option></select></div></div>
+    <div id="pprev" style="font-size:12px;color:var(--text2);margin-top:8px"></div>
+    <div class="mact">
+      <button class="bcancel" onclick="this.closest('.mback').remove()">Cancelar</button>
+      <button class="bsave" onclick="doPrint()">Abrir PDF</button>
+    </div></div>`;
+  document.body.appendChild(b);
+  b.addEventListener('change',updPrev);updPrev();
+}
+
+function getPF(){
+  const f=document.getElementById('pf')?.value;
+  const t=document.getElementById('pt')?.value;
+  const g=document.getElementById('pg')?.value;
+  const s=document.getElementById('ps')?.value;
+  const st=document.getElementById('pst')?.value;
+  return items.filter(a=>{
+    if(a.date<f||a.date>t)return false;
+    if(g!=='all'&&a.grade!==g)return false;
+    if(s!=='all'&&a.subject!==s)return false;
+    if(st!=='all'&&a.status!==st)return false;
+    return true;
+  }).sort((a,b)=>a.date.localeCompare(b.date)||a.curso.localeCompare(b.curso));
+}
+
+function updPrev(){
+  const f=getPF();
+  const p=document.getElementById('pprev');
+  if(p)p.textContent=f.length+' evaluación(es) encontrada(s).';
+}
+
+function doPrint(){
+  const f=getPF();
+  if(!f.length){alert('No hay evaluaciones que coincidan.');return;}
+  document.querySelector('.mback').remove();
+  const byDate={};
+  f.forEach(a=>{if(!byDate[a.date])byDate[a.date]=[];byDate[a.date].push(a);});
+  let h='<div style="font-family:Arial,sans-serif;max-width:780px;margin:0 auto;padding:20px">'
+    +'<div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #1a1a18;padding-bottom:12px;margin-bottom:20px">'
+    +'<div><h1 style="font-size:20px;font-weight:700;margin:0">Calendario de Evaluaciones — Middle</h1>'
+    +'<div style="font-size:12px;color:#666;margin-top:3px">Redland School</div></div>'
+    +'<div style="font-size:11px;color:#888">'+new Date().toLocaleDateString('es-CL')+'</div></div>';
+  Object.keys(byDate).sort().forEach(date=>{
+    h+=`<div style="margin-bottom:16px;break-inside:avoid">
+      <div style="font-size:12px;font-weight:600;color:#333;text-transform:capitalize;border-bottom:0.5px solid #ddd;padding-bottom:4px;margin-bottom:6px">${fmtLong(date)}</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px"><thead>
+        <tr style="background:#f5f5f3">
+          <th style="padding:5px 8px;text-align:left;font-weight:500;color:#666;border-bottom:0.5px solid #ddd">Clase</th>
+          <th style="padding:5px 8px;text-align:left;font-weight:500;color:#666;border-bottom:0.5px solid #ddd">Asignatura</th>
+          <th style="padding:5px 8px;text-align:left;font-weight:500;color:#666;border-bottom:0.5px solid #ddd">Tipo</th>
+          <th style="padding:5px 8px;text-align:left;font-weight:500;color:#666;border-bottom:0.5px solid #ddd">Tema</th>
+          <th style="padding:5px 8px;text-align:left;font-weight:500;color:#666;border-bottom:0.5px solid #ddd">Criterios</th>
+          <th style="padding:5px 8px;text-align:left;font-weight:500;color:#666;border-bottom:0.5px solid #ddd">Estado</th>
+        </tr></thead><tbody>`;
+    byDate[date].forEach(a=>{
+      const stc=a.status==='approved'?'#166534':a.status==='rejected'?'#991B1B':'#92400E';
+      const stb=a.status==='approved'?'#DCFCE7':a.status==='rejected'?'#FEE2E2':'#FEF3C7';
+      h+=`<tr style="border-bottom:0.5px solid #eee">
+        <td style="padding:5px 8px"><strong>${a.curso}</strong></td>
+        <td style="padding:5px 8px">${a.subject}</td>
+        <td style="padding:5px 8px">${a.type}</td>
+        <td style="padding:5px 8px">${a.tema||'—'}</td>
+        <td style="padding:5px 8px">${(a.criterios||[]).join(', ')||'—'}</td>
+        <td style="padding:5px 8px"><span style="font-size:10px;padding:2px 7px;border-radius:999px;background:${stb};color:${stc}">${a.status}</span></td>
+      </tr>`;
+    });
+    h+='</tbody></table></div>';
+  });
+  h+=`<div style="margin-top:24px;font-size:10px;color:#aaa;text-align:center;border-top:0.5px solid #eee;padding-top:8px">Assessment Planner · ${f.length} evaluaciones</div></div>`;
+  const w=window.open('','_blank','width=860,height=700');
+  w.document.write('<!DOCTYPE html><html><head><title>Evaluaciones</title><style>body{margin:0;padding:0}@media print{.np{display:none}}@page{margin:15mm}</style></head><body>'
+    +'<div class="np" style="background:#f0f0ee;padding:10px 20px;display:flex;gap:10px;align-items:center">'
+    +'<button onclick="window.print()" style="background:#1a1a18;color:#fff;border:none;padding:7px 16px;border-radius:6px;font-size:13px;cursor:pointer">&#128438; Imprimir / Guardar PDF</button>'
+    +'<span style="font-size:12px;color:#666">Elige <strong>Guardar como PDF</strong> en la impresora</span>'
+    +'<button onclick="window.close()" style="margin-left:auto;background:none;border:0.5px solid #ccc;padding:5px 12px;border-radius:6px;font-size:12px;cursor:pointer">Cerrar</button>'
+    +'</div>'+h+'</body></html>');
+  w.document.close();
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+document.getElementById('lu').focus();
+</script>
+</body>
+</html>
