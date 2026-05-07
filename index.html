@@ -377,7 +377,7 @@ function renderList() {
       <td><span class="sbadge ${st}">${a.status.charAt(0).toUpperCase()+a.status.slice(1)}</span></td>
       <td>${canApprove&&a.status==='pending'?`<button class="abtn aa" onclick="setStatus(${a.id},'approved')">&#10003;</button><button class="abtn ar2" onclick="rejectWithComment(${a.id},null)">&#10007;</button>`:''}
           ${canEdit?`<button class="abtn" onclick="showDetail(${a.id})">View</button>`:''}
-          ${canEdit&&a.status!=='approved'?`<button class="abtn" style="color:var(--red)" onclick="delItem(${a.id})">Del</button>`:''}
+          ${canEdit?`<button class="abtn" style="color:var(--red)" onclick="delItem(${a.id})">Del</button>`:''}
       </td></tr>`;
   });
   h+='</tbody></table></div>';
@@ -539,9 +539,10 @@ function showDetail(id){
       ${a.comment?`<tr><td style="padding:5px 0;color:var(--text2)">Comentario</td><td>${a.comment}</td></tr>`:''}
     </table>
     <div class="mact">
-      ${canApprove?`<button class="bdanger" onclick="rejectWithComment(${a.id},this.closest('.mback'))">&#10007; Rechazar</button>
+      ${canApprove&&a.status==='pending'?`<button class="bdanger" onclick="rejectWithComment(${a.id},this.closest('.mback'))">&#10007; Rechazar</button>
         <button class="bsave" style="background:var(--green);margin-right:auto" onclick="setStatus(${a.id},'approved');this.closest('.mback').remove()">&#10003; Aprobar</button>`:''}
-      ${canEdit&&a.status!=='approved'?`<button class="bdanger" onclick="delItem(${a.id});this.closest('.mback').remove()">Eliminar</button>`:''}
+      ${cur.role==='coordinator'?`<button class="bdanger" onclick="delItem(${a.id});this.closest('.mback').remove()">Eliminar</button>`
+        :(canEdit&&a.status!=='approved'?`<button class="bdanger" onclick="delItem(${a.id});this.closest('.mback').remove()">Eliminar</button>`:'')}
       <button class="bcancel" onclick="this.closest('.mback').remove()">Cerrar</button>
     </div></div>`;
   document.body.appendChild(b);
