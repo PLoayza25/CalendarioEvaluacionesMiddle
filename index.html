@@ -718,13 +718,51 @@ function exportToCalendar() {
     return;
   }
 
-  // Convert assessments to calendar events (type: test)
-  const newEvents = approved.map(function(a) {
-    const subjectName = USERS[a.by] ? USERS[a.by].name || a.subject : a.subject;
+  // Build selection modal
+  let rows = '';
+  approved.forEach(function(a) {
+    rows += '<tr>'
+      + '<td style="padding:4px 8px;text-align:center"><input type="checkbox" class="exp-chk" data-id="'+a.id+'"'+(a.exported?'':' checked')+'></td>'
+      + '<td style="padding:4px 8px">'+a.date+'</td>'
+      + '<td style="padding:4px 8px">'+a.grade+'</td>'
+      + '<td style="padding:4px 8px">'+(a.subject||'')+'</td>'
+      + '<td style="padding:4px 8px">'+(a.tema||'')+'</td>'
+      + '<td style="padding:4px 8px;text-align:center">'+(a.exported?'<span style="color:green">✓</span>':'')+'</td>'
+      + '</tr>';
+  });
+
+  const b = document.createElement('div');
+  b.className = 'mback';
+  b.innerHTML = '<div class="modal" style="width:700px;max-width:95vw">'
+    + '<h3>&#128228; Export to Calendar</h3>'
+    + '<p style="font-size:12px;color:#888;margin-bottom:12px">Select assessments to export. ✓ = already exported.</p>'
+    + '<div style="max-height:350px;overflow-y:auto">'
+    + '<table style="width:100%;font-size:12px;border-collapse:collapse">'
+    + '<thead><tr style="background:#f0f4fa;font-weight:600">'
+    + '<th style="padding:4px 8px"><input type="checkbox" id="chk-all" checked onchange="document.querySelectorAll(\'.exp-chk\').forEach(function(c){c.checked=this.checked;}.bind(this))"></th>'
+    + '<th style="padding:4px 8px">Date</th><th style="padding:4px 8px">Class</th>'
+    + '<th style="padding:4px 8px">Subject</th><th style="padding:4px 8px">Topic</th>'
+    + '<th style="padding:4px 8px">Exported</th>'
+    + '</tr></thead><tbody>' + rows + '</tbody></table></div>'
+    + '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">'
+    + '<button class="ibtn" onclick="this.closest(\'.mback\').remove()">Cancel</button>'
+    + '<button class="ibtn" style="background:#0D3B6E;color:#fff;border-color:#0D3B6E" onclick="doExportSelected(this)">Export selected</button>'
+    + '</div></div>';
+  document.body.appendChild(b);
+}
+
+function doExportSelected(btn) {
+  const checked = Array.from(document.querySelectorAll('.exp-chk:checked'));
+  if (checked.length === 0) { showToast('No items selected.'); return; }
+
+  const selectedIds = checked.map(function(c){ return parseInt(c.dataset.id); });
+  const toExport = items.filter(function(a){ return selectedIds.indexOf(a.id) >= 0; });
+
+  const newEvents = toExport.map(function(a) {
     return {
       id: Date.now() + Math.floor(Math.random()*10000),
       date: a.date,
-      title: (subjectName || a.subject || 'Assessment') + (a.tema ? ': ' + a.tema : ''),
+      title: (a.subject || 'Assessment') + (a.tema ? ': ' + a.tema : ''),
       type: 'test',
       classes: [a.grade],
       groupId: null,
@@ -735,20 +773,26 @@ function exportToCalendar() {
     };
   });
 
-  // Send to calendar via JSONP
+  btn.textContent = 'Exporting...';
+  btn.disabled = true;
+
   const cb = '_calexp' + Date.now();
   const timer = setTimeout(function() {
     delete window[cb];
     showToast('Export timed out — try again.');
+    btn.closest('.mback').remove();
   }, 30000);
 
   window[cb] = function(data) {
     clearTimeout(timer);
     delete window[cb];
     if (data.ok) {
-      showToast('✓ ' + newEvents.length + ' assessments exported to calendar!');
+      toExport.forEach(function(a){ a.exported = true; });
+      showToast('&#10003; ' + newEvents.length + ' assessments exported to calendar!');
+      btn.closest('.mback').remove();
     } else {
       showToast('Export error: ' + (data.error || 'Unknown error'));
+      btn.closest('.mback').remove();
     }
   };
 
@@ -764,6 +808,7 @@ function exportToCalendar() {
     clearTimeout(timer);
     delete window[cb];
     showToast('Connection error — could not export.');
+    btn.closest('.mback').remove();
   };
   document.head.appendChild(s);
 }
