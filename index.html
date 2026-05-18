@@ -149,6 +149,7 @@ body{font-family:var(--font);background:var(--bg3);color:var(--text);min-height:
       <span id="ulabel" style="font-size:12px;color:var(--text2)"></span>
       <button class="ibtn" onclick="openPrintModal()">&#128438; PDF</button>
       <button class="pbtn" id="add-btn" onclick="openAddModal()" style="display:none">+ Add assessment</button>
+      <button class="ibtn" id="export-cal-btn" onclick="exportToCalendar()" style="display:none">&#128228; Export to Calendar</button>
       <button class="ibtn" id="rev-btn" onclick="openBulkApprove()" style="display:none">&#10003; Review pending</button>
       <button class="ibtn" onclick="doLogout()">Sign out</button>
     </div>
@@ -224,6 +225,8 @@ let view = 'cal';
 let items = [];
 let aGrades = new Set(['5','6','7','8']);
 let aStatus = new Set(['pending','approved','rejected']);
+const CALENDAR_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbydfWSut_2UjEh2-AJ6DMry3oNJgR7d7ET0AmCDBkGkuk4YgePGBwJrBB1N1alJAPoy0w/exec';
+const CALENDAR_TOKEN = '11357';
 let _cn = 0;
 
 function doLogin() {
@@ -239,6 +242,7 @@ function doLogin() {
   document.getElementById('ulabel').textContent=cur.name;
   document.getElementById('add-btn').style.display=cur.role==='teacher'?'inline-block':'none';
   document.getElementById('rev-btn').style.display=cur.role==='coordinator'?'inline-block':'none';
+  document.getElementById('export-cal-btn').style.display=cur.role==='coordinator'?'inline-block':'none';
   loadItems();
 }
 
@@ -404,8 +408,7 @@ document.getElementById('pw').onclick=()=>{weekOff--;render();};
 document.getElementById('nw').onclick=()=>{weekOff++;render();};
 
 function cellClick(date,grade) {
-  if(cur.role==='teacher') openAddModal(date,grade);
-  else showDaySummary(date,grade);
+  openAddModal(date,grade);
 }
 
 function showDaySummary(date,grade) {
@@ -706,6 +709,65 @@ function showToast(msg){
 }
 
 document.getElementById('lu').focus();
+
+// ── Export approved assessments to official calendar ─────────────
+function exportToCalendar() {
+  const approved = items.filter(function(a){ return a.status === 'approved'; });
+  if (approved.length === 0) {
+    showToast('No approved assessments to export.');
+    return;
+  }
+
+  // Convert assessments to calendar events (type: test)
+  const newEvents = approved.map(function(a) {
+    const subjectName = USERS[a.by] ? USERS[a.by].name || a.subject : a.subject;
+    return {
+      id: Date.now() + Math.floor(Math.random()*10000),
+      date: a.date,
+      title: (subjectName || a.subject || 'Assessment') + (a.tema ? ': ' + a.tema : ''),
+      type: 'test',
+      classes: [a.grade],
+      groupId: null,
+      rangeStart: null,
+      rangeEnd: null,
+      rangePosition: null,
+      time: ''
+    };
+  });
+
+  // Send to calendar via JSONP
+  const cb = '_calexp' + Date.now();
+  const timer = setTimeout(function() {
+    delete window[cb];
+    showToast('Export timed out — try again.');
+  }, 30000);
+
+  window[cb] = function(data) {
+    clearTimeout(timer);
+    delete window[cb];
+    if (data.ok) {
+      showToast('✓ ' + newEvents.length + ' assessments exported to calendar!');
+    } else {
+      showToast('Export error: ' + (data.error || 'Unknown error'));
+    }
+  };
+
+  const payload = encodeURIComponent(JSON.stringify({
+    action: 'addEvents',
+    token: CALENDAR_TOKEN,
+    events: newEvents
+  }));
+  const url = CALENDAR_SCRIPT_URL + '?callback=' + cb + '&payload=' + payload;
+  const s = document.createElement('script');
+  s.src = url;
+  s.onerror = function() {
+    clearTimeout(timer);
+    delete window[cb];
+    showToast('Connection error — could not export.');
+  };
+  document.head.appendChild(s);
+}
+
 </script>
 </body>
 </html>
