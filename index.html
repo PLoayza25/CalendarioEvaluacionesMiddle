@@ -724,7 +724,7 @@ function exportToCalendar() {
     rows += '<tr>'
       + '<td style="padding:4px 8px;text-align:center"><input type="checkbox" class="exp-chk" data-id="'+a.id+'"'+(a.exported?'':' checked')+'></td>'
       + '<td style="padding:4px 8px">'+a.date+'</td>'
-      + '<td style="padding:4px 8px">'+a.grade+'</td>'
+      + '<td style="padding:4px 8px">'+(a.curso||'')+'</td>'
       + '<td style="padding:4px 8px">'+(a.subject||'')+'</td>'
       + '<td style="padding:4px 8px">'+(a.tema||'')+'</td>'
       + '<td style="padding:4px 8px;text-align:center">'+(a.exported?'<span style="color:green">✓</span>':'')+'</td>'
@@ -758,13 +758,20 @@ function doExportSelected(btn) {
   const selectedIds = checked.map(function(c){ return parseInt(c.dataset.id); });
   const toExport = items.filter(function(a){ return selectedIds.indexOf(a.id) >= 0; });
 
+  // Expand curso like "5AB" → ["5A","5B"], "7A" → ["7A"]
+  function expandCurso(curso) {
+    const m = curso.match(/^(\d+)([A-Z]+)$/);
+    if (!m) return [curso];
+    return m[2].split('').map(function(l){ return m[1]+l; });
+  }
+
   const newEvents = toExport.map(function(a) {
     return {
       id: Date.now() + Math.floor(Math.random()*10000),
       date: a.date,
       title: (a.subject || 'Assessment') + (a.tema ? ': ' + a.tema : ''),
       type: 'test',
-      classes: [a.grade],
+      classes: expandCurso(a.curso),
       groupId: null,
       rangeStart: null,
       rangeEnd: null,
