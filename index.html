@@ -189,6 +189,7 @@ body{font-family:var(--font);background:var(--bg3);color:var(--text);min-height:
 
 <script>
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyXnNYYSJDkBjYXkn8HEwk6VOOmVAxrAnPNwDfHL5LBUchF4mb5siHJvas5WovPKdPd/exec';
+const ITEMS_JSON_URL = 'https://raw.githubusercontent.com/PLoayza25/CalendarioEvaluacionesMiddle/main/items.json';
 
 const SUBJECTS = ['Lenguaje','Inglés','Francés','Matemáticas','Ciencias','Biología','Química','Física','Música','Arte','Ed.Física y para la Salud','Diseño','Individuo y Sociedades'];
 const SCSS = {'Lenguaje':'sl','Inglés':'si','Francés':'sf','Matemáticas':'sm','Ciencias':'sc','Biología':'sb','Química':'sq','Física':'sf2','Música':'smu','Arte':'sar','Ed.Física y para la Salud':'sef','Diseño':'sd','Individuo y Sociedades':'sis'};
@@ -260,7 +261,7 @@ function api(payload) {
   return new Promise((res,rej) => {
     if (SCRIPT_URL==='PASTE_YOUR_ASSESSMENT_SCRIPT_URL_HERE') { res(localOp(payload)); return; }
     const cb='_ap'+(++_cn);
-    const t=setTimeout(()=>{delete window[cb];rej(new Error('Timeout'));},15000);
+    const t=setTimeout(()=>{delete window[cb];rej(new Error('Timeout'));},30000);
     window[cb]=d=>{clearTimeout(t);delete window[cb];const s=document.getElementById('js_'+cb);if(s)s.remove();res(d);};
     const url=SCRIPT_URL+'?callback='+cb+'&payload='+encodeURIComponent(JSON.stringify(payload));
     const s=document.createElement('script');s.id='js_'+cb;s.src=url;
@@ -290,10 +291,17 @@ function localOp(p) {
 }
 
 function loadItems() {
-  api({action:'getItems'}).then(d=>{
-    if(d.ok){items=d.items||[];render();}
-    else showToast('Error: '+d.error);
-  }).catch(()=>showToast('Connection error'));
+  // Try GitHub JSON first (fast, no CORS issues)
+  fetch(ITEMS_JSON_URL + '?t=' + Date.now())
+    .then(function(r){ if(!r.ok) throw new Error('not found'); return r.json(); })
+    .then(function(data){ items = data.items || []; render(); })
+    .catch(function(){
+      // Fall back to JSONP
+      api({action:'getItems'}).then(function(d){
+        if(d.ok){ items=d.items||[]; render(); }
+        else showToast('Error: '+d.error);
+      }).catch(function(){ showToast('Connection error'); });
+    });
 }
 
 function wStart() {
