@@ -649,7 +649,7 @@ function getPF(){
   const st=document.getElementById('pst')?.value;
   return items.filter(a=>{
     if(a.date<f||a.date>t)return false;
-    if(g!=='all'&&a.grade!==g)return false;
+    if(g!=='all'&&String(a.grade)!==String(g))return false;
     if(s!=='all'&&a.subject!==s)return false;
     if(st!=='all'&&a.status!==st)return false;
     return true;
