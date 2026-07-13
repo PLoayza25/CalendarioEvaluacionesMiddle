@@ -677,25 +677,25 @@ function doPrint(){
   Object.keys(byDate).sort().forEach(date=>{
     h+=`<div style="margin-bottom:16px;break-inside:avoid">
       <div style="font-size:12px;font-weight:600;color:#333;text-transform:capitalize;border-bottom:0.5px solid #ddd;padding-bottom:4px;margin-bottom:6px">${fmtLong(date)}</div>
-      <table style="width:100%;border-collapse:collapse;font-size:12px"><thead>
+      <table style="width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed"><thead>
         <tr style="background:#f5f5f3">
-          <th style="padding:5px 8px;text-align:left;font-weight:500;color:#666;border-bottom:0.5px solid #ddd">Clase</th>
-          <th style="padding:5px 8px;text-align:left;font-weight:500;color:#666;border-bottom:0.5px solid #ddd">Asignatura</th>
-          <th style="padding:5px 8px;text-align:left;font-weight:500;color:#666;border-bottom:0.5px solid #ddd">Tipo</th>
-          <th style="padding:5px 8px;text-align:left;font-weight:500;color:#666;border-bottom:0.5px solid #ddd">Tema</th>
-          <th style="padding:5px 8px;text-align:left;font-weight:500;color:#666;border-bottom:0.5px solid #ddd">Criterios</th>
-          <th style="padding:5px 8px;text-align:left;font-weight:500;color:#666;border-bottom:0.5px solid #ddd">Estado</th>
+          <th style="padding:5px 8px;text-align:left;font-weight:500;color:#666;border-bottom:0.5px solid #ddd;width:60px">Clase</th>
+          <th style="padding:5px 8px;text-align:left;font-weight:500;color:#666;border-bottom:0.5px solid #ddd;width:120px">Asignatura</th>
+          <th style="padding:5px 8px;text-align:left;font-weight:500;color:#666;border-bottom:0.5px solid #ddd;width:100px">Tipo</th>
+          <th style="padding:5px 8px;text-align:left;font-weight:500;color:#666;border-bottom:0.5px solid #ddd;">Tema</th>
+          <th style="padding:5px 8px;text-align:left;font-weight:500;color:#666;border-bottom:0.5px solid #ddd;width:70px">Criterios</th>
+          <th style="padding:5px 8px;text-align:left;font-weight:500;color:#666;border-bottom:0.5px solid #ddd;width:80px">Estado</th>
         </tr></thead><tbody>`;
     byDate[date].forEach(a=>{
       const stc=a.status==='approved'?'#166534':a.status==='rejected'?'#991B1B':'#92400E';
       const stb=a.status==='approved'?'#DCFCE7':a.status==='rejected'?'#FEE2E2':'#FEF3C7';
       h+=`<tr style="border-bottom:0.5px solid #eee">
-        <td style="padding:5px 8px"><strong>${a.curso}</strong></td>
+        <td style="padding:5px 8px">${a.curso}</td>
         <td style="padding:5px 8px">${a.subject}</td>
         <td style="padding:5px 8px">${a.type}</td>
-        <td style="padding:5px 8px">${a.tema||'—'}</td>
+        <td style="padding:5px 8px;word-wrap:break-word;white-space:normal">${a.tema||'—'}</td>
         <td style="padding:5px 8px">${(a.criterios||[]).join(', ')||'—'}</td>
-        <td style="padding:5px 8px"><span style="font-size:10px;padding:2px 7px;border-radius:999px;background:${stb};color:${stc}">${a.status}</span></td>
+        <td style="padding:5px 8px"><span style="font-size:10px;padding:2px 7px;border-radius:999px;background:${stb};color:${stc}">${a.status==='approved'?'Aprobado':a.status==='rejected'?'Rechazado':'Pendiente'}</span></td>
       </tr>`;
     });
     h+='</tbody></table></div>';
