@@ -150,6 +150,7 @@ body{font-family:var(--font);background:var(--bg3);color:var(--text);min-height:
       <span id="ulabel" style="font-size:12px;color:var(--text2)"></span>
       <button class="ibtn" onclick="openPrintModal()">&#128438; PDF</button>
       <button class="pbtn" id="add-btn" onclick="openAddModal()" style="display:none">+ Add assessment</button>
+      <button class="ibtn" id="stats-btn" onclick="openStats()" style="display:none">&#128202; Estadísticas</button>
       <button class="ibtn" id="export-cal-btn" onclick="exportToCalendar()" style="display:none">&#128228; Export to Calendar</button>
       <button class="ibtn" id="rev-btn" onclick="openBulkApprove()" style="display:none">&#10003; Review pending</button>
       <button class="ibtn" onclick="doLogout()">Sign out</button>
@@ -245,6 +246,7 @@ function doLogin() {
   document.getElementById('add-btn').style.display=cur.role==='teacher'?'inline-block':'none';
   document.getElementById('rev-btn').style.display=cur.role==='coordinator'?'inline-block':'none';
   document.getElementById('export-cal-btn').style.display=cur.role==='coordinator'?'inline-block':'none';
+  document.getElementById('stats-btn').style.display=cur.role==='coordinator'?'inline-block':'none';
   loadItems();
 }
 
@@ -829,6 +831,124 @@ function doExportSelected(btn) {
   document.head.appendChild(s);
 }
 
+
+// ── Estadísticas — 3 tablas: pendientes, aprobadas, total ──────────
+function openStats() {
+  const grades = [5, 6, 7, 8];
+  const subjects = [];
+  items.forEach(function(a){
+    if (a.status !== 'rejected' && subjects.indexOf(a.subject) === -1) subjects.push(a.subject);
+  });
+  subjects.sort();
+
+  function buildTable(title, color, statusFilter) {
+    var filtered = statusFilter === 'all'
+      ? items.filter(function(a){ return a.status !== 'rejected'; })
+      : items.filter(function(a){ return a.status === statusFilter; });
+
+    function count(subj, grade) {
+      return filtered.filter(function(a){ return a.subject===subj && Number(a.grade)===grade; }).length;
+    }
+    function rowTotal(subj) {
+      return filtered.filter(function(a){ return a.subject===subj; }).length;
+    }
+    function colTotal(grade) {
+      return filtered.filter(function(a){ return Number(a.grade)===grade; }).length;
+    }
+
+    var rows = '';
+    subjects.forEach(function(subj) {
+      var rt = rowTotal(subj);
+      if (rt === 0) return;
+      rows += '<tr>';
+      rows += '<td style="padding:5px 10px;border-bottom:1px solid #eee">' + subj + '</td>';
+      grades.forEach(function(g) {
+        var n = count(subj, g);
+        rows += '<td style="padding:5px 10px;border-bottom:1px solid #eee;text-align:center">' + (n > 0 ? n : '—') + '</td>';
+      });
+      rows += '<td style="padding:5px 10px;border-bottom:1px solid #eee;text-align:center;font-weight:600;background:#f8f9fa">' + rt + '</td>';
+      rows += '</tr>';
+    });
+    rows += '<tr style="font-weight:700;background:#f0f4fa">';
+    rows += '<td style="padding:5px 10px">Total</td>';
+    var grand = 0;
+    grades.forEach(function(g){
+      var ct = colTotal(g);
+      grand += ct;
+      rows += '<td style="padding:5px 10px;text-align:center">' + ct + '</td>';
+    });
+    rows += '<td style="padding:5px 10px;text-align:center">' + grand + '</td>';
+    rows += '</tr>';
+
+    return '<div style="margin-bottom:20px">'
+      + '<div style="background:' + color + ';color:#fff;padding:8px 12px;font-weight:600;font-size:13px;border-radius:4px 4px 0 0">' + title + '</div>'
+      + '<table style="width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed">'
+      + '<thead><tr style="background:#f5f5f5">'
+      + '<th style="padding:5px 10px;text-align:left;width:140px">Asignatura</th>'
+      + '<th style="padding:5px 10px;text-align:center;width:50px">5°</th>'
+      + '<th style="padding:5px 10px;text-align:center;width:50px">6°</th>'
+      + '<th style="padding:5px 10px;text-align:center;width:50px">7°</th>'
+      + '<th style="padding:5px 10px;text-align:center;width:50px">8°</th>'
+      + '<th style="padding:5px 10px;text-align:center;width:60px;background:#e8edf5">Total</th>'
+      + '</tr></thead><tbody>' + rows + '</tbody></table></div>';
+  }
+
+  var today = new Date().toLocaleDateString('es-CL');
+  var t1 = buildTable('Pendientes de aprobación', '#B45309', 'pending');
+  var t2 = buildTable('Aprobadas', '#15803D', 'approved');
+  var t3 = buildTable('Resumen total (pendientes + aprobadas)', '#1B3A6B', 'all');
+
+  var statsHTML = '<div style="font-family:Arial,sans-serif">'
+    + '<div style="background:#1B3A6B;color:#fff;padding:14px 20px;border-radius:6px 6px 0 0;margin-bottom:16px">'
+    + '<div style="font-size:16px;font-weight:700">Estadísticas — Calendario de Evaluaciones</div>'
+    + '<div style="font-size:11px;opacity:.8;margin-top:2px">Redland School · Middle · ' + today + '</div>'
+    + '</div>'
+    + t1 + t2 + t3
+    + '<div style="font-size:10px;color:#aaa;margin-top:8px">Redland School — Middle Years Assessment Planner</div>'
+    + '</div>';
+
+  var b = document.createElement('div');
+  b.className = 'mback';
+  b.innerHTML = '<div class="modal" style="width:650px;max-width:96vw;max-height:90vh;overflow-y:auto">'
+    + '<h3>&#128202; Estadísticas</h3>'
+    + statsHTML
+    + '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;position:sticky;bottom:0;background:#fff;padding:8px 0">'
+    + '<button class="ibtn" data-closestats="1">Cerrar</button>'
+    + '<button class="ibtn" style="background:#1B3A6B;color:#fff;border-color:#1B3A6B" data-printstats="1">&#128438; Imprimir</button>'
+    + '</div>'
+    + '</div>';
+  document.body.appendChild(b);
+}
+
+function printStats(html) {
+  const w = window.open('', '_blank');
+  w.document.write('<html><head><title>Estadísticas MYP</title>'
+    + '<style>body{font-family:Arial,sans-serif;margin:20px}@media print{button{display:none}}</style>'
+    + '</head><body>' + html
+    + '<br><button onclick="window.print()">Imprimir</button>'
+    + '</body></html>');
+  w.document.close();
+  w.focus();
+  setTimeout(function(){ w.print(); }, 500);
+}
+
+// Close stats modal
+document.addEventListener('click', function(ev) {
+  if (ev.target.dataset.closestats) { ev.target.closest('.mback').remove(); return; }
+  if (ev.target.dataset.printstats) {
+    var html = ev.target.closest('.mback').querySelector('[data-statshtml]');
+    if (!html) {
+      // statsHTML is embedded — find the modal content
+      var modal = ev.target.closest('.modal');
+      var clone = modal.cloneNode(true);
+      // Remove buttons
+      clone.querySelectorAll('button').forEach(function(b){ b.remove(); });
+      printStats(clone.innerHTML);
+    } else {
+      printStats(html.innerHTML);
+    }
+  }
+});
 </script>
 </body>
 </html>
