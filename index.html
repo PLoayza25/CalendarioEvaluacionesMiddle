@@ -847,6 +847,8 @@ function openStats() {
     + '<div><label style="font-size:11px;color:#666;display:block">Desde</label><input type="date" id="sf" value="' + defFrom + '" onchange="renderStats()" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;font-size:12px"></div>'
     + '<div><label style="font-size:11px;color:#666;display:block">Hasta</label><input type="date" id="st" value="' + defTo + '" onchange="renderStats()" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;font-size:12px"></div>'
     + '<div><label style="font-size:11px;color:#666;display:block">Nivel</label><select id="sg" onchange="renderStats()" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;font-size:12px"><option value="all">Todos</option><option value="5">5°</option><option value="6">6°</option><option value="7">7°</option><option value="8">8°</option></select></div>'
+    + '<div><label style="font-size:11px;color:#666;display:block">Asignatura</label><select id="ss" onchange="renderStats()" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;font-size:12px"><option value="all">Todas</option></select></div>'
+    + '<div><label style="font-size:11px;color:#666;display:block">Estado</label><select id="se" onchange="renderStats()" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;font-size:12px"><option value="all">Todas</option><option value="pending">Pendientes</option><option value="approved">Aprobadas</option></select></div>'
     + '</div>'
     + '<div id="stats-tables"></div>'
     + '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;padding-top:8px;border-top:1px solid #eee">'
@@ -861,11 +863,35 @@ function renderStats() {
   var f  = document.getElementById('sf').value;
   var t  = document.getElementById('st').value;
   var gf = document.getElementById('sg').value;
+  var sf = document.getElementById('ss').value;
+  var ef = document.getElementById('se').value;
+
+  // Populate subject dropdown from all items in date range
+  var ssEl = document.getElementById('ss');
+  var allSubjects = [];
+  items.forEach(function(a){
+    if (a.status !== 'rejected' && a.date >= f && a.date <= t
+        && (gf === 'all' || String(a.grade) === gf)
+        && allSubjects.indexOf(a.subject) === -1) {
+      allSubjects.push(a.subject);
+    }
+  });
+  allSubjects.sort();
+  var currentSf = ssEl.value;
+  ssEl.innerHTML = '<option value="all">Todas</option>';
+  allSubjects.forEach(function(s){
+    var opt = document.createElement('option');
+    opt.value = s; opt.textContent = s;
+    if (s === currentSf) opt.selected = true;
+    ssEl.appendChild(opt);
+  });
 
   var filtered = items.filter(function(a){
     return a.status !== 'rejected'
       && a.date >= f && a.date <= t
-      && (gf === 'all' || String(a.grade) === gf);
+      && (gf === 'all' || String(a.grade) === gf)
+      && (sf === 'all' || a.subject === sf)
+      && (ef === 'all' || a.status === ef);
   });
 
   // Get all courses present
@@ -939,9 +965,9 @@ function renderStats() {
       + '<table style="width:100%;border-collapse:collapse;table-layout:auto"><thead>' + header + '</thead><tbody>' + rows + '</tbody></table></div>';
   }
 
-  var t1 = buildTable('Pendientes de aprobación', '#B45309', 'pending');
-  var t2 = buildTable('Aprobadas', '#15803D', 'approved');
-  var t3 = buildTable('Total (pendientes + aprobadas)', '#1B3A6B', 'all');
+  var t1 = ef === 'approved' ? '' : buildTable('Pendientes de aprobación', '#B45309', 'pending');
+  var t2 = ef === 'pending'  ? '' : buildTable('Aprobadas', '#15803D', 'approved');
+  var t3 = ef !== 'all'      ? '' : buildTable('Total (pendientes + aprobadas)', '#1B3A6B', 'all');
 
   var html = '<div id="stats-content" style="font-family:Arial,sans-serif">'
     + '<div style="background:#1B3A6B;color:#fff;padding:12px 16px;border-radius:6px;margin-bottom:14px">'
