@@ -866,17 +866,11 @@ function renderStats() {
   var sf = document.getElementById('ss').value;
   var ef = document.getElementById('se').value;
 
-  // Populate subject dropdown from all items in date range
+  // Fixed subject list — always show all subjects regardless of date range
+  var allSubjects = ['Arte','Biología','Ciencias','Diseño','Ed.Física y para la Salud',
+    'Física','Francés','Individuo y Sociedades','Inglés','Lenguaje',
+    'Matemáticas','Música','Química'];
   var ssEl = document.getElementById('ss');
-  var allSubjects = [];
-  items.forEach(function(a){
-    if (a.status !== 'rejected' && a.date >= f && a.date <= t
-        && (gf === 'all' || String(a.grade) === gf)
-        && allSubjects.indexOf(a.subject) === -1) {
-      allSubjects.push(a.subject);
-    }
-  });
-  allSubjects.sort();
   var currentSf = ssEl.value;
   ssEl.innerHTML = '<option value="all">Todas</option>';
   allSubjects.forEach(function(s){
@@ -918,8 +912,9 @@ function renderStats() {
     var activeCourses = courses.filter(function(c){
       return data.some(function(a){ return a.curso === c; });
     });
-    var activeSubjects = subjects.filter(function(s){
-      return data.some(function(a){ return a.subject === s; });
+    // Always show all subjects
+    var activeSubjects = allSubjects.filter(function(s){
+      return sf === 'all' || s === sf;
     });
 
     function count(subj, curso) {
@@ -942,7 +937,6 @@ function renderStats() {
     var rows = '';
     activeSubjects.forEach(function(subj){
       var rt = rowTotal(subj);
-      if (rt === 0) return;
       rows += '<tr><td style="' + tdStyle + ';text-align:left;font-size:12px">' + subj + '</td>';
       activeCourses.forEach(function(c){
         var n = count(subj, c);
