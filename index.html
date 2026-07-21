@@ -555,6 +555,7 @@ function showDetail(id){
     <div class="mact">
       ${canApprove&&a.status==='pending'?`<button class="bdanger" onclick="rejectWithComment(${a.id},this.closest('.mback'))">&#10007; Rechazar</button>
         <button class="bsave" style="background:var(--green);margin-right:auto" onclick="setStatus(${a.id},'approved');this.closest('.mback').remove()">&#10003; Aprobar</button>`:''}
+      ${canEdit&&a.status==='pending'?`<button class="bsave" style="background:#0D3B6E" onclick="this.closest('.mback').remove();openEditModal(${a.id})">&#9998; Editar</button>`:''}
       ${cur.role==='coordinator'?`<button class="bdanger" onclick="delItem(${a.id});this.closest('.mback').remove()">Eliminar</button>`
         :(canEdit&&a.status!=='approved'?`<button class="bdanger" onclick="delItem(${a.id});this.closest('.mback').remove()">Eliminar</button>`:'')}
       <button class="bcancel" onclick="this.closest('.mback').remove()">Cerrar</button>
@@ -585,6 +586,72 @@ function rejectWithComment(id,oldBackdrop){
 function delItem(id){
   if(!confirm('¿Eliminar esta evaluación?'))return;
   api({action:'delItem',id}).then(d=>{if(d.ok){items=items.filter(a=>a.id!==id);render();showToast('Eliminado.');}else showToast('Error: '+d.error);});
+}
+
+function openEditModal(id) {
+  const a = items.find(function(x){ return x.id === id; });
+  if (!a || a.status !== 'pending') return;
+  const b = document.createElement('div'); b.className = 'mback'; b.id = 'addm';
+  const sOpts = SUBJECTS.map(function(s){ return '<option value="'+s+'"'+(a.subject===s?' selected':'')+'>'+s+'</option>'; }).join('');
+  const tOpts = TYPES.map(function(t){ return '<option value="'+t+'"'+(a.type===t?' selected':'')+'>'+t+'</option>'; }).join('');
+  const gOpts = GRADES.map(function(g){ return '<option value="'+g+'"'+(String(a.grade)===String(g)?' selected':'')+'>'+g+'°</option>'; }).join('');
+  b.innerHTML = '<div class="modal"><h3>&#9998; Editar evaluación</h3>'
+    + '<div id="cwrap"></div>'
+    + '<div class="fgrid"><div class="fb"><label>Asignatura</label><select id="f-sub">'+sOpts+'</select></div>'
+    + '<div class="fb"><label>Fecha</label><input type="date" id="f-date" value="'+a.date+'"></div></div>'
+    + '<div class="fgrid"><div class="fb"><label>Grado</label><select id="f-grade" onchange="updClases()">'+gOpts+'</select></div>'
+    + '<div class="fb"><label>Clase</label><select id="f-clase"></select></div></div>'
+    + '<div class="fgrid"><div class="fb"><label>Tipo</label><select id="f-type" onchange="onTypeChg()">'+tOpts+'</select></div>'
+    + '<div class="fb" id="otro-blk" style="display:none"><label>Especificar tipo</label><input type="text" id="f-otro" placeholder="Describe el tipo"></div></div>'
+    + '<div class="fgrid one"><div class="fb"><label>Tema</label><input type="text" id="f-tema" value="'+( a.tema||'').replace(/"/g,'&quot;')+'" placeholder="Ej: Ecuaciones lineales"></div></div>'
+    + '<div class="fgrid one"><div class="fb"><label>Criterios evaluados <span style="font-weight:400;color:var(--text3)">(máx. 3)</span></label>'
+    + '<div class="critg" id="critg">'+['A','B','C','D'].map(function(c){ return '<button type="button" class="critb'+(a.criterios&&a.criterios.indexOf(c)>=0?' on':'')+'" data-c="'+c+'" onclick="togCrit(this)">'+c+'</button>'; }).join('')+'</div>'
+    + '<div class="crith" id="crith"></div></div></div>'
+    + '<div class="mact">'
+    + '<button class="bcancel" data-closeaddm="1">Cancelar</button>'
+    + '<button class="bsave" onclick="updateItem('+id+')">Guardar cambios</button>'
+    + '</div></div>';
+  document.body.appendChild(b);
+  updClases();
+  // Set correct clase after updClases populates it
+  setTimeout(function(){
+    var cl = document.getElementById('f-clase');
+    if (cl) { cl.value = a.curso; }
+  }, 50);
+  document.getElementById('f-date').onchange = chkConflict;
+  document.getElementById('f-clase').onchange = chkConflict;
+  document.getElementById('f-sub').onchange = chkConflict;
+  if (a.type === 'Otro') {
+    document.getElementById('otro-blk').style.display = 'block';
+    document.getElementById('f-otro').value = a.type;
+  }
+  chkConflict();
+}
+
+function updateItem(id) {
+  const sub   = document.getElementById('f-sub').value;
+  const date  = document.getElementById('f-date').value;
+  const grade = document.getElementById('f-grade').value;
+  const curso = document.getElementById('f-clase').value;
+  let type    = document.getElementById('f-type').value;
+  const tema  = document.getElementById('f-tema').value.trim();
+  const criterios = Array.from(document.querySelectorAll('.critb.on')).map(function(b){ return b.dataset.c; });
+  if (type === 'Otro') { const o = document.getElementById('f-otro').value.trim(); if (o) type = o; }
+  if (!date || !curso) { alert('Completa todos los campos obligatorios.'); return; }
+  // Delete old + add new
+  api({action:'delItem', id: id}).then(function(){
+    return api({action:'addItem', item:{id:id, subject:sub, date:date, grade:grade, curso:curso, type:type, tema:tema, criterios:criterios}});
+  }).then(function(d){
+    if (d.ok) {
+      items = items.filter(function(a){ return a.id !== id; });
+      items.push(d.item);
+      document.getElementById('addm').remove();
+      render();
+      showToast('Evaluación actualizada — pendiente aprobación del coordinador.');
+    } else {
+      showToast('Error: ' + d.error);
+    }
+  }).catch(function(){ showToast('Error de conexión'); });
 }
 
 function openBulkApprove(){
@@ -988,6 +1055,7 @@ function printStats(html) {
 // Close stats modal
 document.addEventListener('click', function(ev) {
   if (ev.target.dataset.closestats) { ev.target.closest('.mback').remove(); return; }
+  if (ev.target.dataset.closeaddm) { var m=document.getElementById('addm'); if(m) m.remove(); return; }
   if (ev.target.dataset.printstats) {
     var html = document.getElementById('stats-content');
     if (html) printStats(html.innerHTML);
