@@ -867,41 +867,58 @@ function doExportSelected(btn) {
   btn.textContent = 'Exporting...';
   btn.disabled = true;
 
-  const cb = '_calexp' + Date.now();
-  const timer = setTimeout(function() {
-    delete window[cb];
-    showToast('Export timed out — try again.');
-    btn.closest('.mback').remove();
-  }, 30000);
+  const CHUNK = 5;
+  const chunks = [];
+  for (let i = 0; i < newEvents.length; i += CHUNK) {
+    chunks.push(newEvents.slice(i, i + CHUNK));
+  }
 
-  window[cb] = function(data) {
-    clearTimeout(timer);
-    delete window[cb];
-    if (data.ok) {
+  function sendChunk(idx) {
+    if (idx >= chunks.length) {
       toExport.forEach(function(a){ a.exported = true; });
-      showToast('&#10003; ' + newEvents.length + ' assessments exported to calendar!');
+      showToast('\u2713 ' + newEvents.length + ' assessments exported to calendar!');
       btn.closest('.mback').remove();
-    } else {
-      showToast('Export error: ' + (data.error || 'Unknown error'));
-      btn.closest('.mback').remove();
+      return;
     }
-  };
 
-  const payload = encodeURIComponent(JSON.stringify({
-    action: 'addEvents',
-    token: CALENDAR_TOKEN,
-    events: newEvents
-  }));
-  const url = CALENDAR_SCRIPT_URL + '?callback=' + cb + '&payload=' + payload;
-  const s = document.createElement('script');
-  s.src = url;
-  s.onerror = function() {
-    clearTimeout(timer);
-    delete window[cb];
-    showToast('Connection error — could not export.');
-    btn.closest('.mback').remove();
-  };
-  document.head.appendChild(s);
+    btn.textContent = 'Exporting ' + Math.min((idx+1)*CHUNK, newEvents.length) + ' of ' + newEvents.length + '...';
+
+    const cb = '_calexp' + Date.now() + '_' + idx;
+    const timer = setTimeout(function() {
+      delete window[cb];
+      showToast('Export timed out on batch ' + (idx+1) + ' — try again.');
+      btn.closest('.mback').remove();
+    }, 30000);
+
+    window[cb] = function(data) {
+      clearTimeout(timer);
+      delete window[cb];
+      if (data.ok) {
+        sendChunk(idx + 1);
+      } else {
+        showToast('Export error on batch ' + (idx+1) + ': ' + (data.error || 'Unknown error'));
+        btn.closest('.mback').remove();
+      }
+    };
+
+    const payload = encodeURIComponent(JSON.stringify({
+      action: 'addEvents',
+      token: CALENDAR_TOKEN,
+      events: chunks[idx]
+    }));
+    const url = CALENDAR_SCRIPT_URL + '?callback=' + cb + '&payload=' + payload;
+    const s = document.createElement('script');
+    s.src = url;
+    s.onerror = function() {
+      clearTimeout(timer);
+      delete window[cb];
+      showToast('Connection error on batch ' + (idx+1) + ' — could not export.');
+      btn.closest('.mback').remove();
+    };
+    document.head.appendChild(s);
+  }
+
+  sendChunk(0);
 }
 
 
